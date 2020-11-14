@@ -1,2 +1,2 @@
 # tiantiandoudizhu
-project for OOAD, a card game
+project for OOAD course, a card game platform
