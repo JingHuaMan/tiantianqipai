@@ -4,17 +4,60 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.example</groupId>
+    <groupId>org.ooad</groupId>
     <artifactId>tiantianqipai</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <dependencies>
         <dependency>
             <groupId>io.netty</groupId>
-            <artifactId>netty-all</artifactId> <!-- Use 'netty-all' for 4.0 or above -->
-            <version>4.1.54.Final</version>
-            <scope>compile</scope>
+            <artifactId>netty-all</artifactId>
+            <version>4.0.14.Final</version>
         </dependency>
     </dependencies>
+
+    <properties>
+        <netty-all.version>4.1.16.Final</netty-all.version>
+        <lombok.version>1.14.8</lombok.version>
+        <java.src.version>1.8</java.src.version>
+        <java.target.version>1.8</java.target.version>
+        <project.encoding>UTF-8</project.encoding>
+        <logback-classic.version>1.0.6</logback-classic.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-all</artifactId>
+                <version>${netty-all.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>1.18.4</version>
+            </dependency>
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+                <version>${logback-classic.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <source>${java.src.version}</source>
+                    <target>${java.target.version}</target>
+                    <encoding>${project.encoding}</encoding>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>
