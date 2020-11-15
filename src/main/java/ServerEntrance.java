@@ -1,3 +1,4 @@
+import handlers.EventDispatcher;
 import handlers.PushDecoder;
 import info.Constants;
 import io.netty.bootstrap.ServerBootstrap;
@@ -33,6 +34,7 @@ public class ServerEntrance {
                 ChannelPipeline pipeline = nioSocketChannel.pipeline();
                 pipeline.addLast(new LengthFieldBasedFrameDecoder(Constants.MESSAGE_MAX_LENGTH, Constants.MESSAGE_LENGTH_FIELD_OFFSET, Constants.MESSAGE_LENGTH_FIELD_LENGTH, 0, Constants.MESSAGE_LENGTH_FIELD_LENGTH));
                 pipeline.addLast(new PushDecoder());
+                pipeline.addLast(EventDispatcher.INSTANCE);
             }
         });
 
