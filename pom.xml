@@ -32,34 +32,10 @@
     </dependencies>
 
     <properties>
-        <netty-all.version>4.1.16.Final</netty-all.version>
-        <lombok.version>1.14.8</lombok.version>
         <java.src.version>1.8</java.src.version>
         <java.target.version>1.8</java.target.version>
         <project.encoding>UTF-8</project.encoding>
-        <logback-classic.version>1.0.6</logback-classic.version>
     </properties>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-all</artifactId>
-                <version>${netty-all.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.projectlombok</groupId>
-                <artifactId>lombok</artifactId>
-                <version>1.18.10</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>ch.qos.logback</groupId>
-                <artifactId>logback-classic</artifactId>
-                <version>${logback-classic.version}</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 
     <build>
         <plugins>
