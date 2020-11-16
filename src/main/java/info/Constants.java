@@ -17,7 +17,7 @@ public class Constants {
 
     public final static int MESSAGE_LENGTH_FIELD_OFFSET = 0;
 
-    public final static int MESSAGE_LENGTH_FIELD_LENGTH = 1;
+    public final static int MESSAGE_LENGTH_FIELD_LENGTH = 4;
 
     public final static int MESSAGE_HEAD1_LENGTH = 1;
 

@@ -1,4 +1,4 @@
-package handlers;
+package handlers.codec;
 
 import info.Constants;
 import io.netty.buffer.ByteBuf;
@@ -8,7 +8,7 @@ import protocal.Message;
 
 import java.util.List;
 
-public class PushDecoder extends ByteToMessageDecoder {
+public class MessageDecoder extends ByteToMessageDecoder {
     @Override
     protected void decode(ChannelHandlerContext channelHandlerContext, ByteBuf byteBuf, List<Object> list) {
         Object decoded = decode(byteBuf);
