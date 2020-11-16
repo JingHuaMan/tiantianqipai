@@ -1,7 +1,5 @@
 package util.database;
 
-
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -34,7 +32,7 @@ public class DatabaseUtil {
             connection.close();
     }
 
-    public boolean checkPassword(String username, String password) throws NoSuchAlgorithmException, UnsupportedEncodingException, SQLException {
+    public boolean checkPassword(String username, String password) throws NoSuchAlgorithmException, SQLException {
         String result = encryptPassword(password);
         String sql = "select password from users where username = '" + username + "';";
         Statement statement = connection.createStatement();
@@ -46,7 +44,7 @@ public class DatabaseUtil {
         return sb.toString().equals(result);
     }
 
-    public boolean signIn(String username, String password) throws NoSuchAlgorithmException, UnsupportedEncodingException, SQLException {
+    public boolean signIn(String username, String password) throws NoSuchAlgorithmException, SQLException {
         String result = encryptPassword(password);
         String sql2 = "select password from users where username = '" + username + "';";
         Statement statement = connection.createStatement();
