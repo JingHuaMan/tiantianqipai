@@ -31,12 +31,6 @@
         </dependency>
     </dependencies>
 
-    <properties>
-        <java.src.version>1.8</java.src.version>
-        <java.target.version>1.8</java.target.version>
-        <project.encoding>UTF-8</project.encoding>
-    </properties>
-
     <build>
         <plugins>
             <plugin>
@@ -44,9 +38,9 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
                 <configuration>
-                    <source>${java.src.version}</source>
-                    <target>${java.target.version}</target>
-                    <encoding>${project.encoding}</encoding>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                    <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>
         </plugins>
