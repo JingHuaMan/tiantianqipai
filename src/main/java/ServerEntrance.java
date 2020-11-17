@@ -1,6 +1,6 @@
-import pipelineHandlers.EventDispatcher;
-import pipelineHandlers.codec.MessageDecoder;
-import pipelineHandlers.codec.MessageEncoder;
+import handler.pipelineHandlers.EventDispatcher;
+import handler.pipelineHandlers.codec.MessageDecoder;
+import handler.pipelineHandlers.codec.MessageEncoder;
 import info.Constants;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;

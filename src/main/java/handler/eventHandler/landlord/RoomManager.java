@@ -1,4 +1,4 @@
-package eventHandler.landlord;
+package handler.eventHandler.landlord;
 
 import info.data.landlord.Room;
 import info.data.system.User;

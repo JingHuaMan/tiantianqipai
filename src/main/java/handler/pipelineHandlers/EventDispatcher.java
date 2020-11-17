@@ -1,4 +1,4 @@
-package pipelineHandlers;
+package handler.pipelineHandlers;
 
 import info.Constants;
 import io.netty.channel.ChannelHandler;
