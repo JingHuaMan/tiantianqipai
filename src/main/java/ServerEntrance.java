@@ -1,6 +1,6 @@
-import handlers.EventDispatcher;
-import handlers.codec.MessageDecoder;
-import handlers.codec.MessageEncoder;
+import pipelineHandlers.EventDispatcher;
+import pipelineHandlers.codec.MessageDecoder;
+import pipelineHandlers.codec.MessageEncoder;
 import info.Constants;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
@@ -24,30 +24,33 @@ public class ServerEntrance {
         NioEventLoopGroup bossGroup = new NioEventLoopGroup();
         NioEventLoopGroup workerGroup = new NioEventLoopGroup();
 
-        serverBootstrap.group(bossGroup, workerGroup);
-        serverBootstrap.channel(NioServerSocketChannel.class);
+        try {
+            serverBootstrap.group(bossGroup, workerGroup);
+            serverBootstrap.channel(NioServerSocketChannel.class);
 //        serverBootstrap.childOption(ChannelOption.SO_KEEPALIVE, true);
-        serverBootstrap.childHandler(new ChannelInitializer<NioSocketChannel>() {
-            @Override
-            protected void initChannel(NioSocketChannel nioSocketChannel) {
-                ChannelPipeline pipeline = nioSocketChannel.pipeline();
-                pipeline.addLast(new LengthFieldBasedFrameDecoder(Constants.MESSAGE_MAX_LENGTH, Constants.MESSAGE_LENGTH_FIELD_OFFSET, Constants.MESSAGE_LENGTH_FIELD_LENGTH, 0, Constants.MESSAGE_LENGTH_FIELD_LENGTH));
-                pipeline.addLast(new MessageEncoder());
-                pipeline.addLast(new MessageDecoder());
-                pipeline.addLast(EventDispatcher.INSTANCE);
-            }
-        });
+            serverBootstrap.childHandler(new ChannelInitializer<NioSocketChannel>() {
+                @Override
+                protected void initChannel(NioSocketChannel nioSocketChannel) {
+                    ChannelPipeline pipeline = nioSocketChannel.pipeline();
+                    pipeline.addLast(new LengthFieldBasedFrameDecoder(Constants.MESSAGE_MAX_LENGTH, Constants.MESSAGE_LENGTH_FIELD_OFFSET, Constants.MESSAGE_LENGTH_FIELD_LENGTH, 0, Constants.MESSAGE_LENGTH_FIELD_LENGTH));
+                    pipeline.addLast(new MessageEncoder());
+                    pipeline.addLast(new MessageDecoder());
+                    pipeline.addLast(EventDispatcher.INSTANCE);
+                }
+            });
 
-        ChannelFuture future = serverBootstrap.bind(Constants.SERVER_PORT);
-        future.addListener((ChannelFutureListener) listener -> {
-            if (listener.isSuccess())
-                log.info("bind port {} success!", Constants.SERVER_PORT);
-            else
-                log.error("bind port {} fail!", Constants.SERVER_PORT);
-        });
-
-
+            ChannelFuture future = serverBootstrap.bind(Constants.SERVER_PORT);
+            future.addListener((ChannelFutureListener) listener -> {
+                if (listener.isSuccess())
+                    log.info("bind port {} success!", Constants.SERVER_PORT);
+                else
+                    log.error("bind port {} fail!", Constants.SERVER_PORT);
+            });
+        } catch (Exception e) {
+            log.error("Server error: ", e);
+        } finally {
+            bossGroup.shutdownGracefully();
+            workerGroup.shutdownGracefully();
+        }
     }
-
-
 }

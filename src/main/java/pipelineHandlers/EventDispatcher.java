@@ -1,4 +1,4 @@
-package handlers;
+package pipelineHandlers;
 
 import info.Constants;
 import io.netty.channel.ChannelHandler;
@@ -27,7 +27,7 @@ public class EventDispatcher extends SimpleChannelInboundHandler<Message> {
                         try {
                             String[] user_info = new String(data, Constants.CHARSET.toString()).split("\0");
                             boolean result = DatabaseUtil.getInstance().signIn(user_info[0], user_info[1]);
-                            Message response = Message.builder().head1((byte)0).head2((byte)0).data(new byte[]{(byte)(result ? 1 : 0)}).build();
+                            Message response = new Message((byte)0, (byte)0, new byte[]{(byte)(result ? 1 : 0)});
                             ctx.writeAndFlush(response);
                         } catch (UnsupportedEncodingException | NoSuchAlgorithmException | SQLException | ClassNotFoundException e) {
                             e.printStackTrace();

@@ -1,4 +1,4 @@
-package handlers.codec;
+package pipelineHandlers.codec;
 
 import info.Constants;
 import io.netty.buffer.ByteBuf;
