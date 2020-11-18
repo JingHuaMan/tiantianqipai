@@ -9,19 +9,15 @@ import protocal.Message;
 import java.util.List;
 
 public class MessageDecoder extends ByteToMessageDecoder {
+
     @Override
     protected void decode(ChannelHandlerContext channelHandlerContext, ByteBuf byteBuf, List<Object> list) {
-        Object decoded = decode(byteBuf);
-        list.add(decoded);
-    }
-
-    private Object decode(ByteBuf in) {
         Message msg = new Message();
-        msg.setHead1(in.readByte());
-        msg.setHead2(in.readByte());
-        byte[] dataBytes = new byte[in.readableBytes() - Constants.MESSAGE_HEAD1_LENGTH - Constants.MESSAGE_HEAD2_LENGTH];
-        in.readBytes(dataBytes);
+        msg.setHead1(byteBuf.readByte());
+        msg.setHead2(byteBuf.readByte());
+        byte[] dataBytes = new byte[byteBuf.readableBytes() - Constants.MESSAGE_HEAD1_LENGTH - Constants.MESSAGE_HEAD2_LENGTH];
+        byteBuf.readBytes(dataBytes);
         msg.setData(dataBytes);
-        return msg;
+        list.add(msg);
     }
 }

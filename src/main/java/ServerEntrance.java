@@ -27,7 +27,7 @@ public class ServerEntrance {
         try {
             serverBootstrap.group(bossGroup, workerGroup);
             serverBootstrap.channel(NioServerSocketChannel.class);
-//        serverBootstrap.childOption(ChannelOption.SO_KEEPALIVE, true);
+            serverBootstrap.childOption(ChannelOption.SO_KEEPALIVE, true);
             serverBootstrap.childHandler(new ChannelInitializer<NioSocketChannel>() {
                 @Override
                 protected void initChannel(NioSocketChannel nioSocketChannel) {
@@ -44,13 +44,13 @@ public class ServerEntrance {
                 if (listener.isSuccess())
                     log.info("bind port {} success!", Constants.SERVER_PORT);
                 else
-                    log.error("bind port {} fail!", Constants.SERVER_PORT);
+                    log.error("Error: bind port {} fail!", Constants.SERVER_PORT);
             });
         } catch (Exception e) {
-            log.error("Server error: ", e);
+            log.error("Error: Server error", e);
         } finally {
-            bossGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();
+            bossGroup.shutdownGracefully();
         }
     }
 }

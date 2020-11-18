@@ -10,7 +10,9 @@ import util.database.DatabaseUtil;
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @ChannelHandler.Sharable
 public class EventDispatcher extends SimpleChannelInboundHandler<Message> {
 
@@ -24,14 +26,7 @@ public class EventDispatcher extends SimpleChannelInboundHandler<Message> {
             case 0: // system operations
                 switch (head2) {
                     case 0: // sign in
-                        try {
-                            String[] user_info = new String(data, Constants.CHARSET.toString()).split("\0");
-                            boolean result = DatabaseUtil.getInstance().signIn(user_info[0], user_info[1]);
-                            Message response = new Message((byte)0, (byte)0, new byte[]{(byte)(result ? 1 : 0)});
-                            ctx.writeAndFlush(response);
-                        } catch (UnsupportedEncodingException | NoSuchAlgorithmException | SQLException | ClassNotFoundException e) {
-                            e.printStackTrace();
-                        }
+                        ctx.writeAndFlush(signIn(data));
                         break;
                     case 1: // log in
 
@@ -56,5 +51,41 @@ public class EventDispatcher extends SimpleChannelInboundHandler<Message> {
                 }
                 break;
         }
+    }
+
+    private Message signIn(byte[] data) {
+        boolean result = false;
+        try {
+            //divide the message and the password by '\0'
+            String[] user_info = bytesToString(data).split("\0");
+            result = DatabaseUtil.getInstance().signIn(user_info[0], user_info[1]);
+        } catch (UnsupportedEncodingException e) {
+            log.error("Error: the charset " + Constants.CHARSET.toString() + " is invalid!");
+        } catch (SQLException e) {
+            log.error("Error: sql exception: " + e);
+        } catch (NoSuchAlgorithmException | ClassNotFoundException e) {
+            log.error("Error: " + e);
+        }
+        return new Message((byte)0, (byte)0, new byte[]{(byte)(result ? 1 : 0)});
+    }
+
+    private Message logIn(byte[] data) {
+        boolean result = false;
+        try {
+            //divide the message and the password by '\0'
+            String[] user_info = bytesToString(data).split("\0");
+            result = DatabaseUtil.getInstance().signIn(user_info[0], user_info[1]);
+        } catch (UnsupportedEncodingException e) {
+            log.error("Error: the charset " + Constants.CHARSET.toString() + " is invalid!");
+        } catch (SQLException e) {
+            log.error("Error: sql exception ", e);
+        } catch (NoSuchAlgorithmException | ClassNotFoundException e) {
+            log.error("Error: ", e);
+        }
+        return new Message((byte)0, (byte)0, new byte[]{(byte)(result ? 1 : 0)});
+    }
+
+    private String bytesToString(byte[] bytes) throws UnsupportedEncodingException {
+        return new String(bytes, Constants.CHARSET.toString());
     }
 }

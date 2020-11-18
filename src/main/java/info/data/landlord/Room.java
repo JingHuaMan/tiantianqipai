@@ -1,7 +1,6 @@
 package info.data.landlord;
 
 import info.data.system.User;
-import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 

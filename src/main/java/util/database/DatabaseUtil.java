@@ -59,6 +59,7 @@ public class DatabaseUtil {
         preparedStatement.executeUpdate();
         return true;
     }
+
     private String encryptPassword(String password) throws NoSuchAlgorithmException {
         MessageDigest messageDigest = MessageDigest.getInstance("MD5");
         byte[] bytes = messageDigest.digest(password.getBytes(StandardCharsets.UTF_8));
