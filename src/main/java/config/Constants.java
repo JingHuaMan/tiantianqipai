@@ -1,4 +1,4 @@
-package info;
+package config;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;

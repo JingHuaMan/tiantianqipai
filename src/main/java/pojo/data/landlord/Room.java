@@ -1,6 +1,6 @@
-package info.data.landlord;
+package pojo.data.landlord;
 
-import info.data.system.User;
+import pojo.data.system.User;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 

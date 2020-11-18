@@ -1,4 +1,4 @@
-package util.database;
+package util;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -7,7 +7,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import info.Constants;
+import config.Constants;
 
 public class DatabaseUtil {
 
@@ -61,12 +61,14 @@ public class DatabaseUtil {
             String passwordInEncryption = encryptPassword(password);
             if (!resultSet.getString(2).equals(passwordInEncryption))
                 return new byte[]{};
+            int data_item = resultSet.getInt(0);
             for (int i = 0; i < 4; i++) {
-                result.add((byte) (resultSet.getInt(0) >> (i * 8)));
+                result.add((byte)(data_item >> (8 * i)));
             }
             for (int i = 3; i < Constants.DATABASE_COLUMNS; i++) {
+                data_item = resultSet.getInt(i);
                 for (int j = 0; j < 4; j++) {
-                    result.add((byte) (resultSet.getInt(i) >> (j * 8)));
+                    result.add((byte) (data_item >> (j * 8)));
                 }
             }
         }

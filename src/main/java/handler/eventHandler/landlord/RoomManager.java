@@ -1,7 +1,7 @@
 package handler.eventHandler.landlord;
 
-import info.data.landlord.Room;
-import info.data.system.User;
+import pojo.data.landlord.Room;
+import pojo.data.system.User;
 
 import java.util.HashSet;
 import java.util.LinkedList;

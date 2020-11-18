@@ -1,4 +1,4 @@
-package protocal;
+package pojo.protocal;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

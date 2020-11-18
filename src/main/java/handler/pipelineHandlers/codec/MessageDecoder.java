@@ -1,10 +1,10 @@
 package handler.pipelineHandlers.codec;
 
-import info.Constants;
+import config.Constants;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
-import protocal.Message;
+import pojo.protocal.Message;
 
 import java.util.List;
 

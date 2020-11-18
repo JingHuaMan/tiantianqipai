@@ -1,7 +1,7 @@
 import handler.pipelineHandlers.EventDispatcher;
 import handler.pipelineHandlers.codec.MessageDecoder;
 import handler.pipelineHandlers.codec.MessageEncoder;
-import info.Constants;
+import config.Constants;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -9,7 +9,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import lombok.extern.slf4j.Slf4j;
-import util.database.DatabaseUtil;
+import util.DatabaseUtil;
 
 import java.sql.SQLException;
 

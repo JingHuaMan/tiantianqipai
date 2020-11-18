@@ -1,6 +1,6 @@
 package handler.eventHandler.system;
 
-import info.data.system.User;
+import pojo.data.system.User;
 
 import java.util.HashSet;
 

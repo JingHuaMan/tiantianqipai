@@ -1,4 +1,4 @@
-package info.data.landlord;
+package pojo.data.landlord;
 
 public class Game {
 

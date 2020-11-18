@@ -1,11 +1,11 @@
 package handler.pipelineHandlers;
 
-import info.Constants;
+import config.Constants;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import protocal.Message;
-import util.database.DatabaseUtil;
+import pojo.protocal.Message;
+import util.DatabaseUtil;
 
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
