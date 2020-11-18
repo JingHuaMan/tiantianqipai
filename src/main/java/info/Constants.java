@@ -30,4 +30,6 @@ public class Constants {
     public final static String DATABASE_PASSWORD = "123456";
 
     public final static String DATABASE_URL = "jdbc:postgresql://localhost:5432/postgres";
+
+    public final static int DATABASE_COLUMNS = 4;
 }

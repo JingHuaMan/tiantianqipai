@@ -10,6 +10,7 @@ import util.database.DatabaseUtil;
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -29,7 +30,7 @@ public class EventDispatcher extends SimpleChannelInboundHandler<Message> {
                         ctx.writeAndFlush(signIn(data));
                         break;
                     case 1: // log in
-
+                        ctx.writeAndFlush(logIn(data));
                 }
                 break;
             case 1:
@@ -62,27 +63,29 @@ public class EventDispatcher extends SimpleChannelInboundHandler<Message> {
         } catch (UnsupportedEncodingException e) {
             log.error("Error: the charset " + Constants.CHARSET.toString() + " is invalid!");
         } catch (SQLException e) {
-            log.error("Error: sql exception: " + e);
+            log.error("Error: sql exception", e);
         } catch (NoSuchAlgorithmException | ClassNotFoundException e) {
-            log.error("Error: " + e);
+            log.error("Error", e);
         }
         return new Message((byte)0, (byte)0, new byte[]{(byte)(result ? 1 : 0)});
     }
 
     private Message logIn(byte[] data) {
-        boolean result = false;
+        Message response = new Message();
         try {
             //divide the message and the password by '\0'
             String[] user_info = bytesToString(data).split("\0");
-            result = DatabaseUtil.getInstance().signIn(user_info[0], user_info[1]);
+            response.setHead1((byte)0);
+            response.setHead2((byte)1);
+            response.setData(DatabaseUtil.getInstance().logIn(user_info[0], user_info[1]));
         } catch (UnsupportedEncodingException e) {
-            log.error("Error: the charset " + Constants.CHARSET.toString() + " is invalid!");
+            log.error("Error: the charset" + Constants.CHARSET.toString() + " is invalid!");
         } catch (SQLException e) {
-            log.error("Error: sql exception ", e);
+            log.error("Error: sql exception", e);
         } catch (NoSuchAlgorithmException | ClassNotFoundException e) {
-            log.error("Error: ", e);
+            log.error("Error:", e);
         }
-        return new Message((byte)0, (byte)0, new byte[]{(byte)(result ? 1 : 0)});
+        return response;
     }
 
     private String bytesToString(byte[] bytes) throws UnsupportedEncodingException {

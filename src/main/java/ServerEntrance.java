@@ -9,6 +9,9 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import lombok.extern.slf4j.Slf4j;
+import util.database.DatabaseUtil;
+
+import java.sql.SQLException;
 
 @Slf4j
 public class ServerEntrance {
@@ -51,6 +54,11 @@ public class ServerEntrance {
         } finally {
             workerGroup.shutdownGracefully();
             bossGroup.shutdownGracefully();
+            try {
+                DatabaseUtil.getInstance().closeConnect();
+            } catch (SQLException | ClassNotFoundException e) {
+                log.error("Failed when closing connection with database");
+            }
         }
     }
 }
