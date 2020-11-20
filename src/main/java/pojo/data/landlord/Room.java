@@ -13,6 +13,7 @@ public class Room {
     @Getter
     private UUID id;
 
+    @Getter
     private final LinkedList<User> users;
 
     public Room() {
@@ -22,7 +23,7 @@ public class Room {
 
     // true means the room is full
     public boolean addUser(User user) {
-        synchronized (users) {
+        synchronized (this) {
             users.add(user);
             return users.size() == 3;
         }
@@ -30,7 +31,7 @@ public class Room {
 
     // true means the room is empty
     public boolean removeUser(User user) {
-        synchronized (users) {
+        synchronized (this) {
             users.remove(user);
             return users.size() == 0;
         }

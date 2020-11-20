@@ -38,8 +38,11 @@ public class DatabaseUtil {
     public boolean signIn(String username, String password) throws NoSuchAlgorithmException, SQLException {
         String result = encryptPassword(password);
         String sql2 = "select password from users where username = '" + username + "';";
-        Statement statement = connection.createStatement();
-        ResultSet resultSet = statement.executeQuery(sql2);
+        ResultSet resultSet;
+        synchronized (connection) {
+            Statement statement = connection.createStatement();
+            resultSet = statement.executeQuery(sql2);
+        }
         if (resultSet.next()) {
             return false;
         }
@@ -52,32 +55,24 @@ public class DatabaseUtil {
         return true;
     }
 
-    public byte[] logIn(String username, String password) throws NoSuchAlgorithmException, SQLException {
+    public List<String> logIn(String username, String password) throws NoSuchAlgorithmException, SQLException {
         String sql = "select * from users where username='" + username + "'";
-        Statement statement = connection.createStatement();
-        ResultSet resultSet = statement.executeQuery(sql);
-        List<Byte> result = new ArrayList<>();
+        ResultSet resultSet;
+        synchronized (connection) {
+            Statement statement = connection.createStatement();
+            resultSet = statement.executeQuery(sql);
+        }
+        List<String> result = new ArrayList<>();
         if (resultSet.next()) {
             String passwordInEncryption = encryptPassword(password);
             if (!resultSet.getString(2).equals(passwordInEncryption))
-                return new byte[]{};
-            int data_item = resultSet.getInt(0);
-            for (int i = 0; i < 4; i++) {
-                result.add((byte)(data_item >> (8 * i)));
-            }
-            for (int i = 3; i < Constants.DATABASE_COLUMNS; i++) {
-                data_item = resultSet.getInt(i);
-                for (int j = 0; j < 4; j++) {
-                    result.add((byte) (data_item >> (j * 8)));
-                }
-            }
+                return result;
+            result.add("" + resultSet.getInt(0));
+            result.add(resultSet.getString(1));
+            for (int i = 3; i < Constants.DATABASE_COLUMNS; i++)
+                result.add("" + resultSet.getInt(i));
         }
-        resultSet.close();
-        int index = 0;
-        byte[] result_array = new byte[result.size()];
-        for (Byte x : result)
-            result_array[index++] = x;
-        return result_array;
+        return result;
     }
 
     private String encryptPassword(String password) throws NoSuchAlgorithmException {

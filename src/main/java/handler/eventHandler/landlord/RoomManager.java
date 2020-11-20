@@ -1,5 +1,6 @@
 package handler.eventHandler.landlord;
 
+import lombok.Getter;
 import pojo.data.landlord.Room;
 import pojo.data.system.User;
 
@@ -11,23 +12,24 @@ public class RoomManager {
 
     public static RoomManager instance = new RoomManager();
 
-    public final Queue<Room> roomWithSpace;
+    private final Queue<Room> roomWithSpace;
 
-    public final HashSet<Room> roomOnGame;
+    @Getter
+    private final HashSet<Room> roomOnGame;
 
     private RoomManager() {
         roomWithSpace = new LinkedList<>();
         roomOnGame = new HashSet<>();
     }
 
-    public synchronized RoomManager getInstance() {
+    public static synchronized RoomManager getInstance() {
         if (instance == null) {
             instance = new RoomManager();
         }
         return instance;
     }
 
-    public Room enterRoom(User user) {
+    public Room getAvailableRoom(User user) {
         Room room;
         synchronized (roomWithSpace) {
             if (roomWithSpace.size() == 0) {
