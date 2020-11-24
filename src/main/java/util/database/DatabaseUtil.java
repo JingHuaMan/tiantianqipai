@@ -1,6 +1,5 @@
-package util;
+package util.database;
 
-import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.*;
@@ -15,24 +14,19 @@ public class DatabaseUtil {
 
     private final Connection connection;
 
-    public DatabaseUtil() throws ClassNotFoundException, SQLException {
-        Class.forName("org.postgresql.Driver");
-        String user = Constants.DATABASE_USERNAME;
-        String password = Constants.DATABASE_PASSWORD;
-        String url = Constants.DATABASE_URL;
-        connection = DriverManager.getConnection(url, user, password);
+    public DatabaseUtil() {
+        connection = ConnectionManager.getInstance().getConnection();
     }
 
-    public static synchronized DatabaseUtil getInstance() throws SQLException, ClassNotFoundException {
+    public static synchronized DatabaseUtil getInstance() {
         if (instance == null) {
             instance = new DatabaseUtil();
         }
         return instance;
     }
 
-    public void closeConnect() throws SQLException {
-        if (connection != null && !connection.isClosed())
-            connection.close();
+    public void closeConnect() {
+        ConnectionManager.closeConnectionPool();
     }
 
     public boolean signIn(String username, String password) throws NoSuchAlgorithmException, SQLException {
@@ -65,11 +59,11 @@ public class DatabaseUtil {
         List<String> result = new ArrayList<>();
         if (resultSet.next()) {
             String passwordInEncryption = encryptPassword(password);
-            if (!resultSet.getString(2).equals(passwordInEncryption))
+            if (!resultSet.getString(3).equals(passwordInEncryption))
                 return result;
-            result.add("" + resultSet.getInt(0));
-            result.add(resultSet.getString(1));
-            for (int i = 3; i < Constants.DATABASE_COLUMNS; i++)
+            result.add("" + resultSet.getInt(1));
+            result.add(resultSet.getString(2));
+            for (int i = 4; i <= Constants.DATABASE_COLUMNS; i++)
                 result.add("" + resultSet.getInt(i));
         }
         return result;
@@ -77,7 +71,7 @@ public class DatabaseUtil {
 
     private String encryptPassword(String password) throws NoSuchAlgorithmException {
         MessageDigest messageDigest = MessageDigest.getInstance("MD5");
-        byte[] bytes = messageDigest.digest(password.getBytes(StandardCharsets.UTF_8));
+        byte[] bytes = messageDigest.digest(password.getBytes(Constants.CHARSET));
         StringBuilder result = new StringBuilder();
         for (byte b : bytes) {
             String tmp = Integer.toHexString(b & 0xff);

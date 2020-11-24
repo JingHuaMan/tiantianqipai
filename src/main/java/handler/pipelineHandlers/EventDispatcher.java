@@ -9,7 +9,7 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import pojo.data.landlord.Room;
 import pojo.data.system.User;
 import pojo.protocal.Message;
-import util.DatabaseUtil;
+import util.database.DatabaseUtil;
 
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
@@ -23,7 +23,14 @@ import lombok.extern.slf4j.Slf4j;
 @ChannelHandler.Sharable
 public class EventDispatcher extends SimpleChannelInboundHandler<Message> {
 
-    public static final EventDispatcher INSTANCE = new EventDispatcher();
+    private static EventDispatcher instance;
+
+    public synchronized static EventDispatcher getInstance() {
+        if (instance == null) {
+            instance = new EventDispatcher();
+        }
+        return instance;
+    }
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, Message msg) {
@@ -33,9 +40,11 @@ public class EventDispatcher extends SimpleChannelInboundHandler<Message> {
             case 0: // system operations
                 switch (head2) {
                     case 0: // sign in
+                        log.info("User sign in");
                         ctx.writeAndFlush(signIn(data));
                         break;
                     case 1: // log in
+                        log.info("User log in");
                         ctx.writeAndFlush(logIn(data, ctx));
                 }
                 break;
@@ -70,7 +79,7 @@ public class EventDispatcher extends SimpleChannelInboundHandler<Message> {
             log.error("Error: the charset " + Constants.CHARSET.toString() + " is invalid!");
         } catch (SQLException e) {
             log.error("Error: sql exception", e);
-        } catch (NoSuchAlgorithmException | ClassNotFoundException e) {
+        } catch (NoSuchAlgorithmException e) {
             log.error("Error", e);
         }
         return new Message((byte)0, (byte)0, new byte[]{(byte)(result ? 1 : 0)});
@@ -104,7 +113,7 @@ public class EventDispatcher extends SimpleChannelInboundHandler<Message> {
             log.error("Error: the charset" + Constants.CHARSET.toString() + " is invalid!");
         } catch (SQLException e) {
             log.error("Error: sql exception", e);
-        } catch (NoSuchAlgorithmException | ClassNotFoundException e) {
+        } catch (NoSuchAlgorithmException e) {
             log.error("Error:", e);
         }
         return response;
@@ -160,8 +169,8 @@ public class EventDispatcher extends SimpleChannelInboundHandler<Message> {
     private byte[] intToBytes(int input) {
         byte[] bytes = new byte[4];
         for (int i = 0; i < 4; i++) {
-            bytes[i] = (byte)(input % 256);
-            input /= 256;
+            bytes[i] = (byte)(input & 0xFF);
+            input = input >> 8;
         }
         return bytes;
     }

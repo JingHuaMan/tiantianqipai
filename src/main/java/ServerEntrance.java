@@ -1,4 +1,6 @@
+import handler.pipelineHandlers.ChannelManager;
 import handler.pipelineHandlers.EventDispatcher;
+import handler.pipelineHandlers.Spliter;
 import handler.pipelineHandlers.codec.MessageDecoder;
 import handler.pipelineHandlers.codec.MessageEncoder;
 import config.Constants;
@@ -7,9 +9,8 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import lombok.extern.slf4j.Slf4j;
-import util.DatabaseUtil;
+import util.database.DatabaseUtil;
 
 import java.sql.SQLException;
 
@@ -35,30 +36,28 @@ public class ServerEntrance {
                 @Override
                 protected void initChannel(NioSocketChannel nioSocketChannel) {
                     ChannelPipeline pipeline = nioSocketChannel.pipeline();
-                    pipeline.addLast(new LengthFieldBasedFrameDecoder(Constants.MESSAGE_MAX_LENGTH, Constants.MESSAGE_LENGTH_FIELD_OFFSET, Constants.MESSAGE_LENGTH_FIELD_LENGTH, 0, Constants.MESSAGE_LENGTH_FIELD_LENGTH));
+                    pipeline.addLast(ChannelManager.getInstance());
+                    pipeline.addLast(new Spliter());
                     pipeline.addLast(new MessageEncoder());
                     pipeline.addLast(new MessageDecoder());
-                    pipeline.addLast(EventDispatcher.INSTANCE);
+                    pipeline.addLast(EventDispatcher.getInstance());
                 }
             });
 
-            ChannelFuture future = serverBootstrap.bind(Constants.SERVER_PORT);
+            ChannelFuture future = serverBootstrap.bind(Constants.SERVER_PORT).sync();
             future.addListener((ChannelFutureListener) listener -> {
                 if (listener.isSuccess())
                     log.info("bind port {} success!", Constants.SERVER_PORT);
                 else
-                    log.error("Error: bind port {} fail!", Constants.SERVER_PORT);
+                    log.error("bind port {} fail!", Constants.SERVER_PORT);
             });
+            future.channel().closeFuture().sync();
         } catch (Exception e) {
-            log.error("Error: Server error", e);
+            log.error("Server error", e);
         } finally {
             workerGroup.shutdownGracefully();
             bossGroup.shutdownGracefully();
-            try {
-                DatabaseUtil.getInstance().closeConnect();
-            } catch (SQLException | ClassNotFoundException e) {
-                log.error("Failed when closing connection with database");
-            }
+            DatabaseUtil.getInstance().closeConnect();
         }
     }
 }
