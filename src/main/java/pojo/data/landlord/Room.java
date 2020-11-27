@@ -11,7 +11,7 @@ import java.util.UUID;
 public class Room {
 
     @Getter
-    private UUID id;
+    private final UUID id;
 
     @Getter
     private final LinkedList<User> users;

@@ -15,5 +15,18 @@ public class Message {
 
     private byte head2;
 
-    private byte[] data;
+    private byte[] data = null;
+
+    public Message copyMessage() {
+        if (data != null) {
+            Message newMessage = new Message();
+            newMessage.setHead1(this.head1);
+            newMessage.setHead2(this.head2);
+            byte[] newData = new byte[this.data.length];
+            System.arraycopy(this.data, 0, newData, 0, this.data.length);
+            newMessage.setData(newData);
+            return newMessage;
+        }
+        return null;
+    }
 }

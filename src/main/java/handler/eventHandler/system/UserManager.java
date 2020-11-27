@@ -1,6 +1,6 @@
 package handler.eventHandler.system;
 
-import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.Channel;
 import pojo.data.system.User;
 
 import java.util.HashMap;
@@ -11,7 +11,7 @@ public class UserManager {
 
     private final HashMap<Integer, User> idUserMap;
 
-    private final HashMap<User, ChannelHandlerContext> usersOnline;
+    private final HashMap<User, Channel> usersOnline;
 
     private UserManager() {
         idUserMap = new HashMap<>();
@@ -25,13 +25,13 @@ public class UserManager {
         return instance;
     }
 
-    public boolean userLogin(User user, ChannelHandlerContext ctx) {
+    public boolean userLogin(User user, Channel channel) {
         synchronized (usersOnline) {
             if (!usersOnline.containsKey(user)) {
                 synchronized (idUserMap) {
                     idUserMap.put(user.getId(), user);
                 }
-                usersOnline.put(user, ctx);
+                usersOnline.put(user, channel);
                 return true;
             }
             return false;
@@ -44,19 +44,7 @@ public class UserManager {
         }
     }
 
-    public ChannelHandlerContext getCtxByUser(User user) {
+    public Channel getChannelByUser(User user) {
         return usersOnline.get(user);
-    }
-
-    public boolean isUserOnline(User user) {
-        synchronized (usersOnline) {
-            return usersOnline.containsKey(user);
-        }
-    }
-
-    public void userLogoff(User user) {
-        synchronized (usersOnline) {
-            usersOnline.remove(user);
-        }
     }
 }
