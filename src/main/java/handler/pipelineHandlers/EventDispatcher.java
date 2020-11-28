@@ -1,13 +1,16 @@
 package handler.pipelineHandlers;
 
 import config.Constants;
+import handler.eventHandler.landlord.GameManager;
 import handler.eventHandler.landlord.RoomManager;
 import handler.eventHandler.system.UserManager;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import pojo.data.landlord.Game;
 import pojo.data.landlord.Room;
+import pojo.data.landlord.card.HandCard;
 import pojo.data.system.User;
 import pojo.protocal.Message;
 import util.database.DatabaseUtil;
@@ -17,6 +20,7 @@ import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -41,11 +45,11 @@ public class EventDispatcher extends SimpleChannelInboundHandler<Message> {
             case 0: // system operations
                 switch (head2) {
                     case 0: // sign in
-                        log.info("User sign in");
+//                        log.info("User sign in");
                         ctx.writeAndFlush(signIn(data));
                         break;
                     case 1: // log in
-                        log.info("User log in");
+//                        log.info("User log in");
                         ctx.writeAndFlush(logIn(data, ctx.channel()));
                 }
                 break;
@@ -55,7 +59,7 @@ public class EventDispatcher extends SimpleChannelInboundHandler<Message> {
                         ctx.writeAndFlush(enterRoom(data));
                         break;
                     case 1: // wait for game
-
+                        waitGame(data);
                         break;
                     case 2: // play a hand
 
@@ -122,10 +126,19 @@ public class EventDispatcher extends SimpleChannelInboundHandler<Message> {
 
     private Message enterRoom(byte[] data) {
         User user = UserManager.getInstance().getUserById(bytesToInt(data, 0));
-        Room room = RoomManager.getInstance().getAvailableRoom(user);
         Message response = new Message();
         response.setHead1((byte)1);
         response.setHead2((byte)0);
+        Room room = null;
+        try {
+            room = RoomManager.getInstance().getAvailableRoom(user, bytesToInt(data, 4));
+        } catch (SQLException e) {
+            log.error("SQLException when query bean num");
+        }
+        if (room == null) {
+            response.setData(new byte[]{0});
+            return response;
+        }
         List<Byte> dataList = new ArrayList<>();
         byte[] usernameInBytes = stringToBytes(user.getUsername());
         Message roommateMsg = new Message();
@@ -154,16 +167,51 @@ public class EventDispatcher extends SimpleChannelInboundHandler<Message> {
         return response;
     }
 
-    private void waitGame(byte[] data) {
+    private void waitGame(byte[] data) { /////////////////////////////////fdfsafafafafsafy有问题啊啊啊啊啊啊啊啊啊啊啊啊啊
         int userId = bytesToInt(data, 0);
-        boolean result = RoomManager.getInstance().userWaitForGame(UserManager.getInstance().getUserById(userId));
-
-        if (result) {
-            Message response = new Message();
-            response.setHead1((byte)1);
-            response.setHead2((byte)2);
-
+        User user = UserManager.getInstance().getUserById(userId);
+        boolean result = false;
+        try {
+            result = RoomManager.getInstance().userWaitForGame(user);
+        } catch (SQLException e) {
+            log.error("SQLException when updating bean num in waiting game");
         }
+        if (result) {
+            Game game = GameManager.getInstance().getRoomGameMap().get(RoomManager.getInstance().getRoomByUser(user));
+            byte[] restCardsBytes = game.getRestCards().toByteArray();
+            for (Map.Entry<User, HandCard> entry: game.getUserHandCardMap().entrySet()) {
+                User roommate = entry.getKey();
+                Channel channel = UserManager.getInstance().getChannelByUser(roommate);
+                Message responseMsg = new Message();    // first byte shows if this player is the first to
+                responseMsg.setHead1((byte)1);          // the following 3 bytes show the rest cards
+                responseMsg.setHead2((byte)3);          // the last segment is for this player's hand cards
+                byte[] responseData = new byte[21];
+                if (game.getCurrentUser() == roommate) {
+                    responseData[0] = (byte)1;
+                }
+                System.arraycopy(restCardsBytes, 0, responseData, 1, 3);
+                System.arraycopy(entry.getValue().toByteArray(), 0, responseData, 4, 17);
+                responseMsg.setData(responseData);
+                channel.writeAndFlush(responseMsg);
+            }
+        } else {
+            for (User roommate: RoomManager.getInstance().getRoomByUser(user).getUsers()) {
+                if (roommate != user) {
+                    Channel channel = UserManager.getInstance().getChannelByUser(roommate);
+                    Message roommateMsg = new Message();
+                    roommateMsg.setHead1((byte)1);
+                    roommateMsg.setHead2((byte)2);
+                    byte[] roommateData = new byte[data.length];
+                    System.arraycopy(data, 0, roommateData, 0, data.length);
+                    roommateMsg.setData(roommateData);
+                    channel.writeAndFlush(roommateMsg);
+                }
+            }
+        }
+    }
+
+    private void playAHand(byte[] data) {
+
     }
 
     private String bytesToString(byte[] input) throws UnsupportedEncodingException {

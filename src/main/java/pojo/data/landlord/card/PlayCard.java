@@ -46,35 +46,12 @@ public class PlayCard extends CardSet {
         thisBytes = input;
     }
 
-    public static byte cardToByte(Card card) {
-        byte a = (byte) (card.val);
-        byte b = (byte) (card.color.getValue());
-        return (byte) ((byte) (a << 2) | b);
-    }
-
-
-
-    public static byte[] cardListToByteArray(List<Card> cardList) {
-        byte[] result = new byte[cardList.size()];
-        for (int i = 0; i < result.length; i++) {
-            result[i] = cardToByte(cardList.get(i));
-        }
-        return result;
-    }
-
     public static List<Card> byteArrayToCardList(byte[] msg) {
         List<Card> result = new ArrayList<>();
         for (byte b : msg) {
-            result.add(byteToCard(b));
+            result.add(new Card(b));
         }
         return result;
-    }
-
-    public static Card byteToCard(byte msg) {
-        byte val = (byte) (msg >> 2);
-        byte temp = 3;
-        byte color = (byte) (temp & msg);
-        return new Card(val, Card.Color.values()[color]);
     }
 
     //查询MyCard中出现频率最多的牌中的频率

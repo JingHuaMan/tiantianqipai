@@ -38,4 +38,12 @@ public class CardSet {
             }
         });
     }
+
+    public byte[] toByteArray() {
+        byte[] result = new byte[cardList.size()];
+        for (int i = 0; i < result.length; i++) {
+            result[i] = cardList.get(i).toByte();
+        }
+        return result;
+    }
 }

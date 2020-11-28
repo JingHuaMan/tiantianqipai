@@ -123,6 +123,14 @@ public class Game {
         return userPoints;
     }
 
+    public User getCurrentUser() {
+        return userLoop.getThis();
+    }
+
+    public HandCard getRestCards() {
+        return userHandCardMap.get(new User(-1));
+    }
+
     private static class UserLoop{
 
         List<User> loop = new ArrayList<>();
@@ -150,6 +158,10 @@ public class Game {
                 pointer = 0;
             }
             return next;
+        }
+
+        User getThis() {
+            return loop.get(pointer);
         }
     }
 }

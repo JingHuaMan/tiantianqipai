@@ -81,4 +81,26 @@ public class DatabaseUtil {
         }
         return result.toString();
     }
+
+    public int getBeanNum(int id) throws SQLException {
+        String sql = "select beannum from users where id='" + id + "'";
+        ResultSet resultSet;
+        synchronized (connection) {
+            Statement statement = connection.createStatement();
+            resultSet = statement.executeQuery(sql);
+        }
+        int result = 0;
+        if (resultSet.next()) {
+            result = resultSet.getInt("beanNum");
+        }
+        return result;
+    }
+
+    public void updateBeanNum(int id, int num) throws SQLException {
+        String sql = "update users set beannum= (select beannum  from users where id=" + id + ")+(" + num + ") where id=" + id + ";";
+        synchronized (connection) {
+            Statement statement = connection.createStatement();
+            statement.executeUpdate(sql);
+        }
+    }
 }

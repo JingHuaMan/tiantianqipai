@@ -24,4 +24,14 @@ public class Card {
         this.val = val;
         this.color = color;
     }
+
+    public Card(byte msg) {
+        this((byte) (msg >> 2), Card.Color.values()[0b11 & msg]);
+    }
+
+    public byte toByte() {
+        byte a = (byte) (this.val);
+        byte b = (byte) (this.color.getValue());
+        return (byte) ((byte) (a << 2) | b);
+    }
 }

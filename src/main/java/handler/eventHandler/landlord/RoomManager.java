@@ -1,19 +1,18 @@
 package handler.eventHandler.landlord;
 
-import lombok.Getter;
+import config.Constants;
 import pojo.data.landlord.Room;
 import pojo.data.system.User;
+import util.database.DatabaseUtil;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.sql.SQLException;
+import java.util.*;
 
 public class RoomManager {
 
     public static RoomManager instance = new RoomManager();
 
-    private final Queue<Room> roomWithSpace;
+    private final List<Queue<Room>> roomWithSpace;
 
     private final HashMap<Room, Integer> roomWaitForGame;
 
@@ -21,11 +20,17 @@ public class RoomManager {
 
     private final HashMap<User, Room> userRoomMap;
 
+    private final HashMap<Room, Integer> roomLevelMap;
+
     private RoomManager() {
-        roomWithSpace = new LinkedList<>();
+        roomWithSpace = new ArrayList<>();
+        for (int i = 0; i < Constants.ROOM_LEVEL_NUM; i++) {
+            roomWithSpace.add(new LinkedList<>());
+        }
         roomWaitForGame = new HashMap<>();
         roomOnGame = new HashSet<>();
         userRoomMap = new HashMap<>();
+        roomLevelMap = new HashMap<>();
     }
 
     public static synchronized RoomManager getInstance() {
@@ -35,17 +40,25 @@ public class RoomManager {
         return instance;
     }
 
-    public Room getAvailableRoom(User user) {
+    public Room getAvailableRoom(User user, int level) throws SQLException {
+        int currentBeanNum = DatabaseUtil.getInstance().getBeanNum(user.getId());
+        if (currentBeanNum < getBeanCostByLevel(level)) {
+            return null;
+        }
         Room room;
+        if (level >= Constants.ROOM_LEVEL_NUM) {
+            return null;
+        }
         synchronized (roomWithSpace) {
             if (roomWithSpace.size() == 0) {
                 room = new Room();
                 room.addUser(user);
-                roomWithSpace.add(room);
+                roomWithSpace.get(level).add(room);
+                roomLevelMap.put(room, level);
             } else {
-                room = roomWithSpace.peek();
-                if (room.addUser(user)) {
-                    roomWithSpace.poll();
+                room = roomWithSpace.get(level).peek();
+                if (room != null && room.addUser(user)) {
+                    roomWithSpace.get(level).poll();
                     synchronized (roomWaitForGame) {
                         roomWaitForGame.put(room, 0);
                     }
@@ -59,7 +72,7 @@ public class RoomManager {
     }
 
     // true means the num of users waiting for game reaches 3, the game starts automatically
-    public boolean userWaitForGame(User user) {
+    public boolean userWaitForGame(User user) throws SQLException {
         Room room = userRoomMap.get(user);
         synchronized (roomWaitForGame) {
             int numOfRoommate = roomWaitForGame.get(room) + 1;
@@ -75,12 +88,20 @@ public class RoomManager {
         }
     }
 
-    private void startGameFromRoom(Room room) {
-
+    private void startGameFromRoom(Room room) throws SQLException {
+        int level = roomLevelMap.get(room);
+        for (User user: room.getUsers()) {
+            DatabaseUtil.getInstance().updateBeanNum(user.getId(), getBeanCostByLevel(roomLevelMap.get(room)));
+        }
+        GameManager.getInstance().startGameByRoom(room, level);
     }
 
     public Room getRoomByUser(User user) {
         return this.userRoomMap.get(user);
+    }
+
+    private int getBeanCostByLevel(int level) {
+        return level * 50;
     }
 
 }
