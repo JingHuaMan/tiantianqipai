@@ -12,8 +12,6 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import lombok.extern.slf4j.Slf4j;
 import util.database.DatabaseUtil;
 
-import java.sql.SQLException;
-
 @Slf4j
 public class ServerEntrance {
 

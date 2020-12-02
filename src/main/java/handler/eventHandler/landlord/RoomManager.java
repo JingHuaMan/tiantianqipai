@@ -2,8 +2,6 @@ package handler.eventHandler.landlord;
 
 import config.Constants;
 import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.Getter;
 import pojo.data.landlord.Room;
 import pojo.data.system.User;
 import util.database.DatabaseUtil;

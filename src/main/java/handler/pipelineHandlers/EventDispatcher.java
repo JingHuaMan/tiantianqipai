@@ -14,7 +14,6 @@ import pojo.data.landlord.card.HandCard;
 import pojo.data.landlord.card.PlayCard;
 import pojo.data.system.User;
 import pojo.protocal.Message;
-import util.database.DatabaseUtil;
 
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
@@ -22,6 +21,7 @@ import java.sql.SQLException;
 import java.util.*;
 
 import lombok.extern.slf4j.Slf4j;
+import util.database.DatabaseUtil;
 
 @Slf4j
 @ChannelHandler.Sharable
