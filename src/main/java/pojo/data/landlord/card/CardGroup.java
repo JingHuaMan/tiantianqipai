@@ -6,10 +6,10 @@ import java.util.List;
 
 public class CardGroup extends CardSet {
     private final List<Card> cardGroup = new ArrayList<>();
-    private HandCard player1;
-    private HandCard player2;
-    private HandCard player3;
-    private HandCard rest;
+    private final HandCard player1 = new HandCard();
+    private final HandCard player2 = new HandCard();
+    private final HandCard player3 = new HandCard();
+    private final HandCard rest = new HandCard();
 
     public CardGroup() {
         this.createPoker();
@@ -51,9 +51,21 @@ public class CardGroup extends CardSet {
     }
 
     public void slicePoker() {
-        this.player1 = new HandCard(cardGroup.subList(0, 17));
-        this.player2 = new HandCard(cardGroup.subList(17, 34));
-        this.player3 = new HandCard(cardGroup.subList(34, 51));
-        this.rest = new HandCard(cardGroup.subList(51, 54));
+        for(int i = 0; i < 17; i++){
+            this.player1.add(cardGroup.get(i));
+        }
+
+        for(int i = 17; i < 34; i++){
+            this.player2.add(cardGroup.get(i));
+        }
+
+        for(int i = 34; i < 51; i++){
+            this.player3.add(cardGroup.get(i));
+        }
+
+        for(int i = 51; i < 54; i++){
+            this.rest.add(cardGroup.get(i));
+        }
+
     }
 }

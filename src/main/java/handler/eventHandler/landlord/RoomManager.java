@@ -1,6 +1,9 @@
 package handler.eventHandler.landlord;
 
 import config.Constants;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.Getter;
 import pojo.data.landlord.Room;
 import pojo.data.system.User;
 import util.database.DatabaseUtil;
@@ -10,13 +13,13 @@ import java.util.*;
 
 public class RoomManager {
 
-    public static RoomManager instance = new RoomManager();
+    private static RoomManager instance = new RoomManager();
 
     private final List<Queue<Room>> roomWithSpace;
 
     private final HashMap<Room, Integer> roomWaitForGame;
 
-    private final HashSet<Room> roomOnGame;
+    private final HashMap<Room, Pair> roomWaitForGameEnd;
 
     private final HashMap<User, Room> userRoomMap;
 
@@ -28,7 +31,7 @@ public class RoomManager {
             roomWithSpace.add(new LinkedList<>());
         }
         roomWaitForGame = new HashMap<>();
-        roomOnGame = new HashSet<>();
+        roomWaitForGameEnd = new HashMap<>();
         userRoomMap = new HashMap<>();
         roomLevelMap = new HashMap<>();
     }
@@ -78,7 +81,6 @@ public class RoomManager {
             int numOfRoommate = roomWaitForGame.get(room) + 1;
             if (numOfRoommate == 3) {
                 roomWaitForGame.remove(room);
-                roomOnGame.add(room);
                 startGameFromRoom(room);
                 return true;
             } else {
@@ -86,6 +88,50 @@ public class RoomManager {
                 return false;
             }
         }
+    }
+
+    public void endGameByRoom(Room room) {
+        synchronized (roomWaitForGameEnd) {
+            roomWaitForGameEnd.put(room, new Pair(0, 0));
+        }
+    }
+
+    // 0 means just end game, 1 means end game with a new game, 2 means new game already start, 3 means everyone leaves
+    public int userEndGame(User user, boolean stayOrLeave) {
+        Room room;
+        synchronized (userRoomMap) {
+            room = userRoomMap.get(user);
+            if (!stayOrLeave) {
+                userRoomMap.remove(user);
+            }
+        }
+        synchronized (roomWaitForGameEnd) {
+            Pair lastPair = roomWaitForGameEnd.get(room);
+            lastPair.totalNum++;
+            if (stayOrLeave) {
+                lastPair.numForStay++;
+            } else {
+                room.removeUser(user);
+            }
+            if (lastPair.totalNum == 3) {
+                roomWaitForGameEnd.remove(room);
+                if (lastPair.numForStay == 1 || lastPair.numForStay == 2) {
+                    synchronized (roomWithSpace) {
+                        roomWithSpace.get(roomLevelMap.get(room)).add(room);
+                    }
+                    return 1;
+                } else if (lastPair.numForStay == 3) {
+                    roomWaitForGame.put(room, 0);
+                    return 2;
+                } else {
+                    synchronized (roomLevelMap) {
+                        roomLevelMap.remove(room);
+                    }
+                    return 3;
+                }
+            }
+        }
+        return 0;
     }
 
     private void startGameFromRoom(Room room) throws SQLException {
@@ -102,6 +148,12 @@ public class RoomManager {
 
     private int getBeanCostByLevel(int level) {
         return level * 50;
+    }
+
+    @AllArgsConstructor
+    private static class Pair{
+        int totalNum;
+        int numForStay;
     }
 
 }

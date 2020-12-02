@@ -27,6 +27,7 @@ public class Game {
     private final UserLoop userLoop;
 
     // temp landlord and final landlord
+    @Getter
     private User landlord;
 
     // the value should be 0 1 2 3
@@ -39,13 +40,15 @@ public class Game {
 
     private PlayCard lastPlayCard;
 
+    private final int level;
+
     @Getter
     private int basePoint;
 
     // false means farmers win
     private boolean isLandlordWin;
 
-    public Game(Room room, int basePoint) {
+    public Game(Room room, int level) {
         this.id = UUID.randomUUID();
         this.room = room;
         this.userHandCardMap = new HashMap<>();
@@ -60,7 +63,8 @@ public class Game {
         this.amountCallForLandlord = 0;
         this.lastPlayUser = null;
         this.lastPlayCard = null;
-        this.basePoint = basePoint;
+        this.level = level;
+        this.basePoint = 10 * level;
     }
 
     // 0 means nothing happen, 1 means landlord is set, 2 means a new round is needed
@@ -73,14 +77,13 @@ public class Game {
             this.landlord = user;
             this.tempMaxLandlordValue = value;
             if (value >= 3 || this.amountCallForLandlord >= 3) {
+                userHandCardMap.get(user).addRest(getRestCards());
                 userLoop.setPointer(user);
                 return 1;
             }
         }
         if (this.amountCallForLandlord >= 3) {
-            this.landlord = null;
-            this.tempMaxLandlordValue = 0;
-            this.amountCallForLandlord = 0;
+            restartGame();
             return 2;
         }
         return 0;
@@ -97,7 +100,7 @@ public class Game {
             this.lastPlayUser = tempUser;
             this.lastPlayCard = tempCard;
             userCard.removeCard(tempCard);
-            PlayCard.CardType type = PlayCard.checkType(tempCard.getList());
+            PlayCard.CardType type = PlayCard.checkType(tempCard);
             if (type == PlayCard.CardType.BOMB || type == PlayCard.CardType.KING_BOMB) {
                 this.basePoint *= 2;
             }
@@ -123,12 +126,31 @@ public class Game {
         return userPoints;
     }
 
-    public User getCurrentUser() {
-        return userLoop.getThis();
-    }
-
     public HandCard getRestCards() {
         return userHandCardMap.get(new User(-1));
+    }
+
+    public List<User> getUserOrder() {
+        List<User> result = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            result.add(this.userLoop.getNext());
+        }
+        return result;
+    }
+
+    public void restartGame() {
+        this.userHandCardMap.clear();
+        CardSet[] sets = LandlordUtil.dealCards();
+        for (int i = 0; i < 3; i++) {
+            this.userHandCardMap.put(room.getUsers().get(i), (HandCard) sets[i]);
+        }
+        this.userHandCardMap.put(new User(-1), (HandCard) sets[3]);
+        this.userLoop.restartUserLoop();
+        this.landlord = null;
+        this.tempMaxLandlordValue = 0;
+        this.amountCallForLandlord = 0;
+        this.lastPlayUser = null;
+        this.lastPlayCard = null;
     }
 
     private static class UserLoop{
@@ -139,7 +161,7 @@ public class Game {
 
         UserLoop(List<User> users) {
             loop.addAll(users);
-            Collections.shuffle(users);
+            Collections.shuffle(loop);
             pointer = 0;
         }
 
@@ -160,8 +182,9 @@ public class Game {
             return next;
         }
 
-        User getThis() {
-            return loop.get(pointer);
+        void restartUserLoop() {
+            Collections.shuffle(loop);
+            pointer = 0;
         }
     }
 }

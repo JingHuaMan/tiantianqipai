@@ -1,6 +1,5 @@
 package handler.eventHandler.landlord;
 
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import pojo.data.landlord.Game;
 import pojo.data.landlord.Room;
@@ -18,7 +17,6 @@ public class GameManager {
     private static GameManager instance;
 
     // game on play
-    @Getter
     private final HashMap<Room, Game> roomGameMap;
 
     private GameManager() {
@@ -33,7 +31,7 @@ public class GameManager {
     }
 
     public void startGameByRoom(Room room, int level) {
-        Game game = new Game(room, level * 100);
+        Game game = new Game(room, level);
         synchronized (roomGameMap) {
             roomGameMap.put(room, game);
         }
@@ -48,7 +46,7 @@ public class GameManager {
         return game.playCard(playCard);
     }
 
-    public Map<User, Integer> endGame(Room room) {
+    public Map<User, Integer> getGameResult(Room room) {
         Game game = roomGameMap.get(room);
         Map<User, Integer> result = game.getResult();
         try {
@@ -61,6 +59,16 @@ public class GameManager {
         synchronized (roomGameMap) {
             roomGameMap.remove(room);
         }
+        RoomManager.getInstance().endGameByRoom(room);
         return result;
+    }
+
+    public Game getGameByUser(User user) {
+        Room room = RoomManager.getInstance().getRoomByUser(user);
+        Game game;
+        synchronized (roomGameMap) {
+            game = roomGameMap.get(room);
+        }
+        return game;
     }
 }

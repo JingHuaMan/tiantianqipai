@@ -46,4 +46,8 @@ public class CardSet {
         }
         return result;
     }
+
+    public int getSize() {
+        return cardList.size();
+    }
 }
