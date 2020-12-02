@@ -1,12 +1,12 @@
 package util.database;
 
+import config.Constants;
+
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-
-import config.Constants;
 
 public class DatabaseUtil {
 
@@ -48,7 +48,50 @@ public class DatabaseUtil {
         resultSet.close();
         return true;
     }
-
+    public boolean useHalfCost(int id) throws SQLException {
+        String sql1 = "select halfcost from users where id=" + id ;
+        ResultSet resultSet;
+        synchronized (connection) {
+            Statement statement = connection.createStatement();
+            resultSet = statement.executeQuery(sql1);
+            int number=resultSet.getInt("halfcost");
+            if (number==0) {
+                return false;
+            }
+            String sql2 = "update users set halfcost="+(number-1)+" where id=" + id ;
+            resultSet = statement.executeQuery(sql2);
+            return true;
+        }
+    }
+    public boolean useDoubleEarning(int id) throws SQLException {
+        String sql1 = "select doubleearning from users where id=" + id ;
+        ResultSet resultSet;
+        synchronized (connection) {
+            Statement statement = connection.createStatement();
+            resultSet = statement.executeQuery(sql1);
+            int number=resultSet.getInt("doubleearning");
+            if (number==0) {
+                return false;
+            }
+            String sql2 = "update users set doubleearning="+(number-1)+" where id=" + id ;
+            statement.executeUpdate(sql2);
+            return true;
+        }
+    }
+    public void updateHalfCost(int id, int num) throws SQLException {
+        String sql = "update users set halfcost= (select halfcost  from users where id=" + id + ")+(" + num + ") where id=" + id + ";";
+        synchronized (connection) {
+            Statement statement = connection.createStatement();
+            statement.executeUpdate(sql);
+        }
+    }
+    public void updateDoubleEarning(int id, int num) throws SQLException {//only add, no decline
+        String sql = "update users set doubleearning= (select doubleearning  from users where id=" + id + ")+(" + num + ") where id=" + id + ";";
+        synchronized (connection) {
+            Statement statement = connection.createStatement();
+            statement.executeUpdate(sql);
+        }
+    }
     public List<String> logIn(String username, String password) throws NoSuchAlgorithmException, SQLException {
         String sql = "select * from users where username='" + username + "'";
         ResultSet resultSet;
