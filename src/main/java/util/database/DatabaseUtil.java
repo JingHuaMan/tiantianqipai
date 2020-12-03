@@ -59,7 +59,7 @@ public class DatabaseUtil {
                 return false;
             }
             String sql2 = "update users set halfcost="+(number-1)+" where id=" + id ;
-            resultSet = statement.executeQuery(sql2);
+            statement.executeUpdate(sql2);
             return true;
         }
     }
