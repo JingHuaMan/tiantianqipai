@@ -31,7 +31,7 @@ public class Constants {
 
     public final static String DATABASE_URL = "jdbc:postgresql://localhost:5432/postgres";
 
-    public final static int DATABASE_COLUMNS = 4;
+    public final static int DATABASE_COLUMNS = 6;
 
     // The following are the parameters for landlord
 
