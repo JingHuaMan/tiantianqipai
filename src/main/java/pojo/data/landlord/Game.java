@@ -76,11 +76,11 @@ public class Game {
         if (value > this.tempMaxLandlordValue) {
             this.landlord = user;
             this.tempMaxLandlordValue = value;
-            if (value >= 3 || this.amountCallForLandlord >= 3) {
-                userHandCardMap.get(user).addRest(getRestCards());
-                userLoop.setPointer(user);
-                return 1;
-            }
+        }
+        if (this.tempMaxLandlordValue >= 3 || (this.amountCallForLandlord >= 3 && this.tempMaxLandlordValue != 0)) {
+            userHandCardMap.get(this.landlord).addRest(getRestCards());
+            userLoop.setPointer(this.landlord);
+            return 1;
         }
         if (this.amountCallForLandlord >= 3) {
             restartGame();
@@ -92,6 +92,9 @@ public class Game {
     // 0 means invalid, 1 means valid, 2 means game finishes
     public int playCard(PlayCard tempCard) {
         User tempUser = this.userLoop.getNext();
+        if (tempCard.getSize() == 0) {
+            return 1;
+        }
         HandCard userCard = this.userHandCardMap.get(tempUser);
         if (!LandlordUtil.checkCardsValid(tempCard) || !LandlordUtil.cardSetContains(tempCard, userCard)) {
             return 0;

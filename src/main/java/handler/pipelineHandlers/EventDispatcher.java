@@ -3,6 +3,7 @@ package handler.pipelineHandlers;
 import config.Constants;
 import handler.eventHandler.landlord.GameManager;
 import handler.eventHandler.landlord.RoomManager;
+import handler.eventHandler.system.BeanAndPropsManager;
 import handler.eventHandler.system.UserManager;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
@@ -16,7 +17,6 @@ import pojo.data.system.User;
 import pojo.protocal.Message;
 
 import java.io.UnsupportedEncodingException;
-import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.util.*;
 
@@ -38,6 +38,7 @@ public class EventDispatcher extends SimpleChannelInboundHandler<Message> {
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, Message msg) {
+//        log.info(msg.toString());
         byte head1 = msg.getHead1(), head2 = msg.getHead2();
         byte[] data = msg.getData();
         switch (head1) {
@@ -50,6 +51,14 @@ public class EventDispatcher extends SimpleChannelInboundHandler<Message> {
                     case 1: // log in
 //                        log.info("User log in");
                         ctx.writeAndFlush(logIn(data, ctx.channel()));
+                    case 2: // log out
+                        logOut(data);
+                    case 3: // use game props
+                        ctx.writeAndFlush(useProps(data));
+                    case 4: // buy game props
+                        ctx.writeAndFlush(buyProps(data));
+                    case 5: // get daily beans
+                        ctx.writeAndFlush(getDailyBeans(data));
                 }
                 break;
             case 1:
@@ -81,10 +90,6 @@ public class EventDispatcher extends SimpleChannelInboundHandler<Message> {
             result = DatabaseUtil.getInstance().signIn(user_info[0], user_info[1]);
         } catch (UnsupportedEncodingException e) {
             log.error("Error: the charset " + Constants.CHARSET.toString() + " is invalid!");
-        } catch (SQLException e) {
-            log.error("Error: sql exception", e);
-        } catch (NoSuchAlgorithmException e) {
-            log.error("Error", e);
         }
         return new Message((byte) 0, (byte) 0, new byte[]{(byte) (result ? 1 : 0)});
     }
@@ -103,28 +108,59 @@ public class EventDispatcher extends SimpleChannelInboundHandler<Message> {
                 User logInUser = new User(Integer.parseInt(responseInfo.get(0)), responseInfo.get(1));
                 if (UserManager.getInstance().userLogin(logInUser, channel)) {
                     byte[] responseData = new byte[4 * (responseInfo.size() - 1)];
-                    int index = 0;
-                    for (byte i : intToBytes(Integer.parseInt(responseInfo.get(0))))
-                        responseData[index++] = i;
+                    System.arraycopy(intToBytes(Integer.parseInt(responseInfo.get(0))), 0, responseData, 0, 4);
                     for (int i = 0; i < Constants.DATABASE_COLUMNS - 3; i++)
-                        for (byte j : intToBytes(Integer.parseInt(responseInfo.get(2 + i))))
-                            responseData[index++] = j;
+                        System.arraycopy(intToBytes(Integer.parseInt(responseInfo.get(2 + i))), 0, responseData, 4 * (i + 1), 4);
                     response.setData(responseData);
                 } else
                     response.setData(new byte[0]);
             }
         } catch (UnsupportedEncodingException e) {
             log.error("Error: the charset" + Constants.CHARSET.toString() + " is invalid!");
-        } catch (SQLException e) {
-            log.error("Error: sql exception", e);
-        } catch (NoSuchAlgorithmException e) {
-            log.error("Error:", e);
         }
         return response;
     }
 
+    private void logOut(byte[] data) {
+        UserManager.getInstance().userLogout(bytesToInt(data, 0));
+    }
+
+    private Message useProps(byte[] data) {
+        User user = UserManager.getInstance().getUserById(bytesToInt(data, 0));
+        boolean result = BeanAndPropsManager.getInstance().useProps(user, (data[5] == 0) ?
+                BeanAndPropsManager.PropType.DOUBLE_EARN : BeanAndPropsManager.PropType.HALF_COST);
+        Message msg = new Message();
+        msg.setHead1((byte)0);
+        msg.setHead2((byte)2);
+        msg.setData(new byte[] {(byte)(result ? 1 : 0)});
+        return msg;
+    }
+
+    private Message buyProps(byte[] data) {
+        User user = UserManager.getInstance().getUserById(bytesToInt(data, 0));
+        boolean result = BeanAndPropsManager.getInstance().buyProps(user, (data[5] == 0) ?
+                BeanAndPropsManager.PropType.DOUBLE_EARN : BeanAndPropsManager.PropType.HALF_COST,
+                bytesToInt(data, 5));
+        Message msg = new Message();
+        msg.setHead1((byte)0);
+        msg.setHead2((byte)2);
+        msg.setData(new byte[] {(byte)(result ? 1 : 0)});
+        return msg;
+    }
+
+    private Message getDailyBeans(byte[] data) {
+        User user = UserManager.getInstance().getUserById(bytesToInt(data, 0));
+        boolean result = BeanAndPropsManager.getInstance().getBeanDaily(user);
+        Message msg = new Message();
+        msg.setHead1((byte)0);
+        msg.setHead2((byte)2);
+        msg.setData(new byte[] {(byte)(result ? 1 : 0)});
+        return msg;
+    }
+
     private Message enterRoom(byte[] data) {
         User user = UserManager.getInstance().getUserById(bytesToInt(data, 0));
+//        log.info(user.toString());
         Message response = new Message();
         response.setHead1((byte) 1);
         response.setHead2((byte) 0);
@@ -135,7 +171,8 @@ public class EventDispatcher extends SimpleChannelInboundHandler<Message> {
             log.error("SQLException when query bean num");
         }
         if (room == null) {
-            response.setData(new byte[]{0});
+            System.out.println(44);
+            response.setData(new byte[]{});
             return response;
         }
         List<Byte> dataList = new ArrayList<>();
@@ -144,13 +181,16 @@ public class EventDispatcher extends SimpleChannelInboundHandler<Message> {
         Message roommateMsg = new Message();
         roommateMsg.setHead1((byte) 1);
         roommateMsg.setHead2((byte) 1);
-        byte[] roommateData = new byte[4 + usernameInBytes.length];
+        byte[] roommateData = new byte[8 + usernameInBytes.length];
         System.arraycopy(userIdInBytes, 0, roommateData, 0, 4);
-        System.arraycopy(usernameInBytes, 0, roommateData, 4, usernameInBytes.length);
+        System.arraycopy(intToBytes(usernameInBytes.length), 0, roommateData, 4, 4);
+        System.arraycopy(usernameInBytes, 0, roommateData, 8, usernameInBytes.length);
         roommateMsg.setData(roommateData);
         boolean first = true;
+        byte userNum = 0;
         for (User userInRoom : room.getUsers()) {
             if (userInRoom != user) {
+                userNum++;
                 if (first) {
                     first = false;
                 } else {
@@ -158,15 +198,19 @@ public class EventDispatcher extends SimpleChannelInboundHandler<Message> {
                 }
                 for (byte i : intToBytes(userInRoom.getId()))
                     dataList.add(i);
-                dataList.add((byte) '\0');
+                for (byte i : intToBytes(userInRoom.getUsername().length()))
+                    dataList.add(i);
                 for (byte i : stringToBytes(userInRoom.getUsername()))
                     dataList.add(i);
                 Channel roommateChannel = UserManager.getInstance().getChannelByUser(userInRoom);
+                System.out.println(roommateChannel);
+                System.out.println(roommateMsg);
                 roommateChannel.writeAndFlush(roommateMsg.copyMessage());
             }
         }
-        int index = 0;
-        byte[] responseData = new byte[dataList.size()];
+        int index = 1;
+        byte[] responseData = new byte[1 + dataList.size()];
+        responseData[0] = userNum;
         for (byte i : dataList)
             responseData[index++] = i;
         response.setData(responseData);
@@ -261,44 +305,50 @@ public class EventDispatcher extends SimpleChannelInboundHandler<Message> {
         Game game = GameManager.getInstance().getGameByUser(user);
         PlayCard tempCards = new PlayCard(Arrays.copyOfRange(data, 4, data.length));
         int result = GameManager.getInstance().playCardByUser(user, tempCards);
+        Channel thisChannel = UserManager.getInstance().getChannelByUser(user);
+        Message thisResponseMsg = new Message();
+        thisResponseMsg.setHead1((byte) 1);
+        thisResponseMsg.setHead2((byte) 7);
         if (result == 0) { // illegal cards
-            Channel channel = UserManager.getInstance().getChannelByUser(user);
-            Message responseMsg = new Message();
-            responseMsg.setHead1((byte)1);
-            responseMsg.setHead2((byte)7);
-            responseMsg.setData(new byte[0]);
-            channel.writeAndFlush(responseMsg);
+            thisResponseMsg.setData(new byte[] {0});
+            thisChannel.writeAndFlush(thisResponseMsg);
         } else if (result == 1) { // legal cards
-            for (User roommate: room.getUsers()) {
+            thisResponseMsg.setData(new byte[] {1});
+            thisChannel.writeAndFlush(thisResponseMsg);
+            for (User roommate : room.getUsers()) {
                 if (roommate != user) {
                     Channel channel = UserManager.getInstance().getChannelByUser(roommate);
                     HandCard roommateHandCard = game.getUserHandCardMap().get(roommate);
                     Message responseMsg = new Message();
-                    responseMsg.setHead1((byte)1);
-                    responseMsg.setHead2((byte)8);
-                    PlayCard availablePlayCard = roommateHandCard.getAvailablePlayCard(tempCards);
-                    byte[] responseData = new byte[availablePlayCard.getSize() + data.length + 1];
-                    System.arraycopy(availablePlayCard.toByteArray(), 0, responseData, 0, availablePlayCard.getSize());
-                    System.arraycopy(data, 0, responseData, availablePlayCard.getSize() + 1, data.length);
-                    responseMsg.setData(responseData);
+                    responseMsg.setHead1((byte) 1);
+                    responseMsg.setHead2((byte) 8);
+                    if (tempCards.getSize() == 0) {
+                        responseMsg.setData(data);
+                    } else {
+                        PlayCard availablePlayCard = roommateHandCard.getAvailablePlayCard(tempCards);
+                        byte[] responseData = new byte[availablePlayCard.getSize() + data.length + 1];
+                        System.arraycopy(data, 0, responseData, 0, data.length);
+                        System.arraycopy(availablePlayCard.toByteArray(), 0, responseData, data.length + 1, availablePlayCard.getSize());
+                        responseMsg.setData(responseData);
+                    }
                     channel.writeAndFlush(responseMsg);
                 }
             }
         } else { // game finished
             Message responseMsg = new Message();
-            responseMsg.setHead1((byte)1);
-            responseMsg.setHead2((byte)9);
+            responseMsg.setHead1((byte) 1);
+            responseMsg.setHead2((byte) 9);
             byte[] responseData = new byte[data.length + 25];
             System.arraycopy(data, 0, responseData, 0, data.length);
             Map<User, Integer> gameResult = GameManager.getInstance().getGameResult(room);
             int index = data.length + 1;
-            for (Map.Entry<User, Integer> userResult: gameResult.entrySet()) {
+            for (Map.Entry<User, Integer> userResult : gameResult.entrySet()) {
                 System.arraycopy(intToBytes(userResult.getKey().getId()), 0, responseData, index, 4);
                 System.arraycopy(intToBytes(userResult.getValue()), 0, responseData, index + 4, 4);
                 index += 8;
             }
             responseMsg.setData(responseData);
-            for (User roommate: room.getUsers()) {
+            for (User roommate : room.getUsers()) {
                 Channel channel = UserManager.getInstance().getChannelByUser(roommate);
                 channel.writeAndFlush(responseMsg);
                 responseMsg = responseMsg.copyMessage();
@@ -313,31 +363,31 @@ public class EventDispatcher extends SimpleChannelInboundHandler<Message> {
         int result = RoomManager.getInstance().userEndGame(user, stayOrLeave);
         if (result == 0) {
             if (!stayOrLeave) {
-                for (User roommate: room.getUsers()) {
+                for (User roommate : room.getUsers()) {
                     Channel channel = UserManager.getInstance().getChannelByUser(roommate);
                     Message responseMsg = new Message();
-                    responseMsg.setHead1((byte)1);
-                    responseMsg.setHead2((byte)10);
+                    responseMsg.setHead1((byte) 1);
+                    responseMsg.setHead2((byte) 10);
                     responseMsg.setData(intToBytes(user.getId()));
                     channel.writeAndFlush(responseMsg);
                 }
             }
         } else if (result == 1) {
             int responseDataInInt = stayOrLeave ? 0 : user.getId();
-            for (User roommate: room.getUsers()) {
+            for (User roommate : room.getUsers()) {
                 Channel channel = UserManager.getInstance().getChannelByUser(roommate);
                 Message responseMsg = new Message();
-                responseMsg.setHead1((byte)1);
-                responseMsg.setHead2((byte)11);
+                responseMsg.setHead1((byte) 1);
+                responseMsg.setHead2((byte) 11);
                 responseMsg.setData(intToBytes(responseDataInInt));
                 channel.writeAndFlush(responseMsg);
             }
         } else if (result == 2) {
-            for (User roommate: room.getUsers()) {
+            for (User roommate : room.getUsers()) {
                 Channel channel = UserManager.getInstance().getChannelByUser(roommate);
                 Message responseMsg = new Message();
-                responseMsg.setHead1((byte)1);
-                responseMsg.setHead2((byte)12);
+                responseMsg.setHead1((byte) 1);
+                responseMsg.setHead2((byte) 12);
                 responseMsg.setData(new byte[0]);
                 channel.writeAndFlush(responseMsg);
             }
@@ -355,7 +405,7 @@ public class EventDispatcher extends SimpleChannelInboundHandler<Message> {
     private byte[] intToBytes(int input) {
         byte[] bytes = new byte[4];
         for (int i = 0; i < 4; i++) {
-            bytes[i] = (byte) (input & 0xFF);
+            bytes[3 - i] = (byte) (input & 0xFF);
             input = input >> 8;
         }
         return bytes;
@@ -364,7 +414,7 @@ public class EventDispatcher extends SimpleChannelInboundHandler<Message> {
     private int bytesToInt(byte[] input, int start) {
         int result = 0;
         for (int i = 0; i < 4; i++)
-            result += ((int) input[start + i]) << (8 * i);
+            result += ((int) input[start + 3 - i]) << (8 * i);
         return result;
     }
 }

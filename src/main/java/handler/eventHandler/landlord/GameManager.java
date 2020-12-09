@@ -1,5 +1,6 @@
 package handler.eventHandler.landlord;
 
+import handler.eventHandler.system.BeanAndPropsManager;
 import lombok.extern.slf4j.Slf4j;
 import pojo.data.landlord.Game;
 import pojo.data.landlord.Room;
@@ -49,12 +50,12 @@ public class GameManager {
     public Map<User, Integer> getGameResult(Room room) {
         Game game = roomGameMap.get(room);
         Map<User, Integer> result = game.getResult();
-        try {
-            for (Map.Entry<User, Integer> entry: result.entrySet()) {
-                DatabaseUtil.getInstance().updateBeanNum(entry.getKey().getId(), entry.getValue());
+        for (Map.Entry<User, Integer> entry: result.entrySet()) {
+            if (entry.getValue() > 0) {
+                BeanAndPropsManager.getInstance().addBeans(entry.getKey(), entry.getValue());
+            } else {
+                BeanAndPropsManager.getInstance().spendBeans(entry.getKey(), entry.getValue());
             }
-        } catch (SQLException e) {
-            log.error("SQLException when updating the bean nums");
         }
         synchronized (roomGameMap) {
             roomGameMap.remove(room);

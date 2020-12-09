@@ -25,7 +25,7 @@ public final class ConnectionManager {
         dataSource.setMinPoolSize(1);                           // minimum connection amount
         dataSource.setMaxPoolSize(10);                          // maximum connection amount
         dataSource.setMaxStatements(50);                        // maximum waiting time
-        dataSource.setMaxIdleTime(60);                          // maximum idle time
+        dataSource.setMaxIdleTime(2);                          // maximum idle time
     }
 
     public static synchronized ConnectionManager getInstance() {

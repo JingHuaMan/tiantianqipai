@@ -38,6 +38,15 @@ public class UserManager {
         }
     }
 
+    public void userLogout(int userid) {
+        synchronized (idUserMap) {
+            synchronized (usersOnline) {
+                usersOnline.remove(idUserMap.get(userid));
+            }
+            idUserMap.remove(userid);
+        }
+    }
+
     public User getUserById(int userId) {
         synchronized (idUserMap) {
             return idUserMap.get(userId);

@@ -23,6 +23,12 @@ public class Constants {
 
     public final static int MESSAGE_HEAD2_LENGTH = 1;
 
+    // Bean and props
+
+    public final static int DAILY_BEAN = 3000;
+
+    public final static int PROP_PRICE = 500;
+
     // The following are the parameters for database
 
     public final static String DATABASE_USERNAME = "postgres";
@@ -31,7 +37,7 @@ public class Constants {
 
     public final static String DATABASE_URL = "jdbc:postgresql://localhost:5432/postgres";
 
-    public final static int DATABASE_COLUMNS = 4;
+    public final static int DATABASE_COLUMNS = 6;
 
     // The following are the parameters for landlord
 

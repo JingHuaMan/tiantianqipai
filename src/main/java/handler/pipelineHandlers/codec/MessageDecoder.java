@@ -14,6 +14,7 @@ public class MessageDecoder extends ByteToMessageDecoder {
 
     @Override
     protected void decode(ChannelHandlerContext channelHandlerContext, ByteBuf byteBuf, List<Object> list) {
+        System.out.println("get : " + channelHandlerContext.channel());
         if (byteBuf.readableBytes() < 2)
             return;
         Message msg = new Message();
@@ -22,6 +23,7 @@ public class MessageDecoder extends ByteToMessageDecoder {
         msg.setHead2(byteBuf.readByte());
         byteBuf.readBytes(dataBytes);
         msg.setData(dataBytes);
+        log.info(msg.toString());
         list.add(msg);
     }
 }

@@ -1,5 +1,6 @@
 package pojo.data.landlord;
 
+import lombok.ToString;
 import pojo.data.system.User;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -8,6 +9,7 @@ import java.util.LinkedList;
 import java.util.UUID;
 
 @EqualsAndHashCode(exclude = {"id"})
+@ToString
 public class Room {
 
     @Getter

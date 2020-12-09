@@ -1,3 +1,4 @@
+import handler.eventHandler.system.BeanAndPropsManager;
 import handler.pipelineHandlers.ChannelManager;
 import handler.pipelineHandlers.EventDispatcher;
 import handler.pipelineHandlers.Spliter;
@@ -41,6 +42,9 @@ public class ServerEntrance {
                     pipeline.addLast(EventDispatcher.getInstance());
                 }
             });
+
+            // start timer in the bean and props manager
+            BeanAndPropsManager.getInstance();
 
             ChannelFuture future = serverBootstrap.bind(Constants.SERVER_PORT).sync();
             future.addListener((ChannelFutureListener) listener -> {

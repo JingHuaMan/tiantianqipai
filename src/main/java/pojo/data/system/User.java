@@ -6,6 +6,7 @@ import lombok.*;
 @EqualsAndHashCode(exclude = {"id"})
 @AllArgsConstructor
 @RequiredArgsConstructor
+@ToString
 public class User {
     @NonNull
     private int id;

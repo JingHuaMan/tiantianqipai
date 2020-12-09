@@ -1,6 +1,7 @@
 package util.database;
 
 import config.Constants;
+import lombok.extern.slf4j.Slf4j;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -8,14 +9,14 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 public class DatabaseUtil {
 
     private static DatabaseUtil instance;
 
-    private final Connection connection;
+    private Connection connection;
 
     public DatabaseUtil() {
-        connection = ConnectionManager.getInstance().getConnection();
     }
 
     public static synchronized DatabaseUtil getInstance() {
@@ -25,96 +26,135 @@ public class DatabaseUtil {
         return instance;
     }
 
+    private void getConnection() {
+        connection = ConnectionManager.getInstance().getConnection();
+    }
+
     public void closeConnect() {
         ConnectionManager.closeConnectionPool();
     }
 
-    public boolean signIn(String username, String password) throws NoSuchAlgorithmException, SQLException {
+    public synchronized boolean signIn(String username, String password) {
+        getConnection();
         String result = encryptPassword(password);
         String sql2 = "select password from users where username = '" + username + "';";
         ResultSet resultSet;
-        synchronized (connection) {
+        try {
             Statement statement = connection.createStatement();
             resultSet = statement.executeQuery(sql2);
+
+            if (resultSet.next()) {
+                return false;
+            }
+            String sql = "insert into users(username,password) values(?,?)";
+            PreparedStatement preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setString(1, username);
+            preparedStatement.setString(2, result);
+            preparedStatement.executeUpdate();
+            resultSet.close();
+        } catch (SQLException e) {
+            log.error("Sign In Error");
         }
-        if (resultSet.next()) {
-            return false;
-        }
-        String sql = "insert into users(username,password) values(?,?)";
-        PreparedStatement preparedStatement = connection.prepareStatement(sql);
-        preparedStatement.setString(1, username);
-        preparedStatement.setString(2, result);
-        preparedStatement.executeUpdate();
-        resultSet.close();
         return true;
     }
-    public boolean useHalfCost(int id) throws SQLException {
-        String sql1 = "select halfcost from users where id=" + id ;
+
+    public synchronized boolean useHalfCost(int id) {
+        getConnection();
+        String sql1 = "select halfcost from users where id=" + id;
         ResultSet resultSet;
-        synchronized (connection) {
+        try {
             Statement statement = connection.createStatement();
             resultSet = statement.executeQuery(sql1);
-            int number=resultSet.getInt("halfcost");
-            if (number==0) {
+            int number = resultSet.getInt("halfcost");
+            if (number == 0) {
                 return false;
             }
-            String sql2 = "update users set halfcost="+(number-1)+" where id=" + id ;
+            String sql2 = "update users set halfcost=" + (number - 1) + " where id=" + id;
             statement.executeUpdate(sql2);
-            return true;
+        } catch (SQLException e) {
+            log.error("Use HalfCost Error");
         }
+        return true;
+
     }
-    public boolean useDoubleEarning(int id) throws SQLException {
-        String sql1 = "select doubleearning from users where id=" + id ;
+
+    public synchronized boolean useDoubleEarning(int id) {
+        String sql1 = "select doubleearning from users where id=" + id;
         ResultSet resultSet;
-        synchronized (connection) {
+        try {
+            getConnection();
             Statement statement = connection.createStatement();
             resultSet = statement.executeQuery(sql1);
-            int number=resultSet.getInt("doubleearning");
-            if (number==0) {
+            int number = resultSet.getInt("doubleearning");
+            if (number == 0) {
                 return false;
             }
-            String sql2 = "update users set doubleearning="+(number-1)+" where id=" + id ;
+            String sql2 = "update users set doubleearning=" + (number - 1) + " where id=" + id;
             statement.executeUpdate(sql2);
-            return true;
+        } catch (SQLException e) {
+            log.error("Use Double Earning Error");
         }
+        return true;
     }
-    public void updateHalfCost(int id, int num) throws SQLException {
+
+    public synchronized void updateHalfCost(int id, int num) {
+        getConnection();
         String sql = "update users set halfcost= (select halfcost  from users where id=" + id + ")+(" + num + ") where id=" + id + ";";
-        synchronized (connection) {
+        try {
             Statement statement = connection.createStatement();
             statement.executeUpdate(sql);
+        } catch (SQLException e) {
+            log.error("Use Half Cost Error");
         }
+
     }
-    public void updateDoubleEarning(int id, int num) throws SQLException {//only add, no decline
+
+    public synchronized void updateDoubleEarning(int id, int num) {
+        getConnection();
         String sql = "update users set doubleearning= (select doubleearning  from users where id=" + id + ")+(" + num + ") where id=" + id + ";";
-        synchronized (connection) {
+        try {
             Statement statement = connection.createStatement();
             statement.executeUpdate(sql);
+        } catch (SQLException e) {
+            log.error("Update Double Earning Error");
         }
     }
-    public List<String> logIn(String username, String password) throws NoSuchAlgorithmException, SQLException {
+
+    public synchronized List<String> logIn(String username, String password) {
+        getConnection();
         String sql = "select * from users where username='" + username + "'";
         ResultSet resultSet;
-        synchronized (connection) {
+        List<String> result = new ArrayList<>();
+        try {
             Statement statement = connection.createStatement();
             resultSet = statement.executeQuery(sql);
-        }
-        List<String> result = new ArrayList<>();
-        if (resultSet.next()) {
-            String passwordInEncryption = encryptPassword(password);
-            if (!resultSet.getString(3).equals(passwordInEncryption))
-                return result;
-            result.add("" + resultSet.getInt(1));
-            result.add(resultSet.getString(2));
-            for (int i = 4; i <= Constants.DATABASE_COLUMNS; i++)
-                result.add("" + resultSet.getInt(i));
+            if (resultSet.next()) {
+                String passwordInEncryption = encryptPassword(password);
+                if (!resultSet.getString(3).equals(passwordInEncryption))
+                    return result;
+                result.add("" + resultSet.getInt(1));
+                result.add(resultSet.getString(2));
+                for (int i = 4; i <= Constants.DATABASE_COLUMNS; i++)
+                    result.add("" + resultSet.getInt(i));
+            }
+        } catch (SQLException e) {
+            log.error("Fail when login");
         }
         return result;
     }
 
-    private String encryptPassword(String password) throws NoSuchAlgorithmException {
-        MessageDigest messageDigest = MessageDigest.getInstance("MD5");
-        byte[] bytes = messageDigest.digest(password.getBytes(Constants.CHARSET));
+    private String encryptPassword(String password) {
+        getConnection();
+        MessageDigest messageDigest = null;
+        try {
+            messageDigest = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            log.error("Encryption error");
+        }
+        byte[] bytes = new byte[0];
+        if (messageDigest != null) {
+            bytes = messageDigest.digest(password.getBytes(Constants.CHARSET));
+        }
         StringBuilder result = new StringBuilder();
         for (byte b : bytes) {
             String tmp = Integer.toHexString(b & 0xff);
@@ -125,25 +165,32 @@ public class DatabaseUtil {
         return result.toString();
     }
 
-    public int getBeanNum(int id) throws SQLException {
+    public synchronized int getBeanNum(int id) {
+        getConnection();
         String sql = "select beannum from users where id='" + id + "'";
         ResultSet resultSet;
-        synchronized (connection) {
+        int result = 0;
+        try {
             Statement statement = connection.createStatement();
             resultSet = statement.executeQuery(sql);
+            if (resultSet.next()) {
+                result = resultSet.getInt("beanNum");
+            }
+        } catch (SQLException e) {
+            log.error("Get Bean Number error");
         }
-        int result = 0;
-        if (resultSet.next()) {
-            result = resultSet.getInt("beanNum");
-        }
+
         return result;
     }
 
-    public void updateBeanNum(int id, int num) throws SQLException {
+    public synchronized void updateBeanNum(int id, int num) {
+        getConnection();
         String sql = "update users set beannum= (select beannum  from users where id=" + id + ")+(" + num + ") where id=" + id + ";";
-        synchronized (connection) {
+        try {
             Statement statement = connection.createStatement();
             statement.executeUpdate(sql);
+        } catch (SQLException e) {
+            log.error("Update Bean Number Error");
         }
     }
 }

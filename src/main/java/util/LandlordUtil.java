@@ -37,7 +37,7 @@ public class LandlordUtil {
     }
 
     public static boolean checkCardsValid(PlayCard cards) {
-        return PlayCard.checkType(cards.getList()) != PlayCard.CardType.INVALID;
+        return PlayCard.checkType(cards) != PlayCard.CardType.INVALID;
     }
 
 }

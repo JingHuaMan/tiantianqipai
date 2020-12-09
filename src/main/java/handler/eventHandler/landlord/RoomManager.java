@@ -1,6 +1,7 @@
 package handler.eventHandler.landlord;
 
 import config.Constants;
+import handler.eventHandler.system.BeanAndPropsManager;
 import lombok.AllArgsConstructor;
 import pojo.data.landlord.Room;
 import pojo.data.system.User;
@@ -46,12 +47,12 @@ public class RoomManager {
         if (currentBeanNum < getBeanCostByLevel(level)) {
             return null;
         }
-        Room room;
         if (level >= Constants.ROOM_LEVEL_NUM) {
             return null;
         }
         synchronized (roomWithSpace) {
-            if (roomWithSpace.size() == 0) {
+            Room room;
+            if (roomWithSpace.get(level).size() == 0) {
                 room = new Room();
                 room.addUser(user);
                 roomWithSpace.get(level).add(room);
@@ -65,11 +66,11 @@ public class RoomManager {
                     }
                 }
             }
+            synchronized (userRoomMap) {
+                userRoomMap.put(user, room);
+            }
+            return room;
         }
-        synchronized (userRoomMap) {
-            userRoomMap.put(user, room);
-        }
-        return room;
     }
 
     // true means the num of users waiting for game reaches 3, the game starts automatically
@@ -132,7 +133,7 @@ public class RoomManager {
         return 0;
     }
 
-    private void startGameFromRoom(Room room) throws SQLException {
+    private void startGameFromRoom(Room room) {
         int level = roomLevelMap.get(room);
         for (User user: room.getUsers()) {
             DatabaseUtil.getInstance().updateBeanNum(user.getId(), getBeanCostByLevel(roomLevelMap.get(room)));
@@ -152,6 +153,17 @@ public class RoomManager {
     private static class Pair{
         int totalNum;
         int numForStay;
+    }
+
+    public static void main(String[] args) {
+        try {
+            Room A = getInstance().getAvailableRoom(new User(2, "Yang"), 3);
+            System.out.println(A);
+            Room B = getInstance().getAvailableRoom(new User(2, "YCH"), 3);
+            System.out.println(B);
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
     }
 
 }
