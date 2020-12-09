@@ -35,6 +35,7 @@ public class BeanAndPropsManager {
         new Timer().schedule(new TimerTask() {
             @Override
             public void run() {
+                userBeanDaily.clear();
                 for (HashSet<User> props: allGameProps) {
                     props.clear();
                 }
