@@ -127,24 +127,28 @@ public class EventDispatcher extends SimpleChannelInboundHandler<Message> {
 
     private Message useProps(byte[] data) {
         User user = UserManager.getInstance().getUserById(bytesToInt(data, 0));
-        boolean result = BeanAndPropsManager.getInstance().useProps(user, (data[5] == 0) ?
+        boolean result = BeanAndPropsManager.getInstance().useProps(user, (data[4] == 0) ?
                 BeanAndPropsManager.PropType.DOUBLE_EARN : BeanAndPropsManager.PropType.HALF_COST);
         Message msg = new Message();
         msg.setHead1((byte)0);
         msg.setHead2((byte)2);
-        msg.setData(new byte[] {(byte)(result ? 1 : 0)});
+        msg.setData(new byte[] {(byte)(result ? 1 : 0), data[4]});
         return msg;
     }
 
     private Message buyProps(byte[] data) {
         User user = UserManager.getInstance().getUserById(bytesToInt(data, 0));
-        boolean result = BeanAndPropsManager.getInstance().buyProps(user, (data[5] == 0) ?
+        boolean result = BeanAndPropsManager.getInstance().buyProps(user, (data[4] == 0) ?
                 BeanAndPropsManager.PropType.DOUBLE_EARN : BeanAndPropsManager.PropType.HALF_COST,
                 bytesToInt(data, 5));
         Message msg = new Message();
         msg.setHead1((byte)0);
         msg.setHead2((byte)2);
-        msg.setData(new byte[] {(byte)(result ? 1 : 0)});
+        byte[] msgData = new byte[6];
+        msgData[0] = (byte)(result ? 1 : 0);
+        msgData[1] = data[4];
+        System.arraycopy(data, 5, msgData, 2, 4);
+        msg.setData(msgData);
         return msg;
     }
 
